@@ -25,11 +25,13 @@ class CLI:
 
             if command == "exit":
                 break
-            if command == "ls":
+            elif command == "ls":
                 print(command)
                 for arg in args:
                     print(arg)
-            if command == "cd":
+            elif command == "cd":
                 print(command)
                 for arg in args:
                     print(arg)
+            else:
+                print("command not found: " + command)
