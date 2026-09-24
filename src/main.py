@@ -1,9 +1,46 @@
+import argparse
+import os
+import sys
+
 from CLI import CLI
 
 
-def run():
-    """Точка входа: запуск CLI."""
-    cli = CLI()
+def parse_args(argv=None):
+    """Разбор параметров командной строки."""
+    parser = argparse.ArgumentParser(
+        description="Эмулятор unix-оболочки (вариант 5)",
+    )
+    parser.add_argument(
+        "--vfs",
+        dest="vfs_path",
+        default=None,
+        help="Путь к физическому расположению VFS",
+    )
+    parser.add_argument(
+        "--script",
+        dest="script_path",
+        default=None,
+        help="Путь к стартовому скрипту эмулятора",
+    )
+    return parser.parse_args(argv)
+
+
+def print_debug_config(args):
+    """Отладочный вывод всех заданных параметров."""
+    print("=== debug: параметры запуска ===")
+    print(f"vfs_path    = {args.vfs_path!r}")
+    print(f"script_path = {args.script_path!r}")
+    print(f"cwd         = {os.getcwd()!r}")
+    print(f"argv        = {sys.argv!r}")
+    print("================================")
+
+
+def run(argv=None):
+    """Точка входа: разбор аргументов и запуск CLI."""
+    args = parse_args(argv)
+    print_debug_config(args)
+
+    cli = CLI(vfs_path=args.vfs_path, script_path=args.script_path)
     cli.run()
 
 

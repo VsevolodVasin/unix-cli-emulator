@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -e
-cd "$(dirname "$0")"
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT"
 
 if [ -d .venv ]; then
   source .venv/bin/activate
 fi
 
-cd src
-python3 main.py
+PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
+  python3 "$ROOT/src/main.py" "$@"

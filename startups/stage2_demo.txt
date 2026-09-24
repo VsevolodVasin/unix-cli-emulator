@@ -1,0 +1,7 @@
+# демо стартового скрипта (этап 2)
+ls
+ls -l /tmp
+cd /home
+cd
+unknown_cmd
+exit
