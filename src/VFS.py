@@ -51,15 +51,11 @@ class VFS:
                 children[name] = self._normalize_node(child)
             return {"type": "dir", "children": children}
         if ntype == "file":
-            # encoding: base64 (основной) или text (строка в JSON)
-            encoding = node.get("encoding", "text")
             content = node.get("content", "")
-            if encoding == "base64":
-                raw = base64.b64decode(content)
-            else:
-                raw = content.encode("utf-8") if isinstance(
-                    content, str
-                ) else content
+            try:
+                raw = base64.b64decode(content, validate=True)
+            except (TypeError, ValueError) as e:
+                raise VFSError(f"invalid base64 content: {e}") from e
             return {"type": "file", "content": raw}
         raise VFSError(f"unknown node type: {ntype}")
 

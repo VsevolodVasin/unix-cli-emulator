@@ -5,7 +5,6 @@
     "children": {
       "readme.txt": {
         "type": "file",
-        "encoding": "base64",
         "content": "bWluaW1hbCB2ZnMK"
       }
     }

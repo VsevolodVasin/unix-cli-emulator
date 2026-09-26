@@ -5,17 +5,14 @@
     "children": {
       "a.txt": {
         "type": "file",
-        "encoding": "base64",
         "content": "YWxwaGEK"
       },
       "b.txt": {
         "type": "file",
-        "encoding": "base64",
         "content": "YnJhdm8KYnJhdm8KY2hhcmxpZQo="
       },
       "data.bin": {
         "type": "file",
-        "encoding": "base64",
         "content": "SGVsbG8gYmluYXJ5IQ=="
       },
       "notes": {
@@ -23,7 +20,6 @@
         "children": {
           "todo.txt": {
             "type": "file",
-            "encoding": "base64",
             "content": "YnV5IG1pbGsK"
           }
         }

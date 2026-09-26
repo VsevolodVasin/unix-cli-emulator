@@ -14,19 +14,16 @@
                 "children": {
                   "report.txt": {
                     "type": "file",
-                    "encoding": "base64",
                     "content": "ZGVlcCBsZXZlbCByZXBvcnQK"
                   },
                   "img.bin": {
                     "type": "file",
-                    "encoding": "base64",
                     "content": "AQIDBA=="
                   }
                 }
               },
               ".profile": {
                 "type": "file",
-                "encoding": "base64",
                 "content": "ZXhwb3J0IFBBVEgK"
               }
             }
@@ -38,7 +35,6 @@
         "children": {
           "hosts": {
             "type": "file",
-            "encoding": "base64",
             "content": "MTI3LjAuMC4xIGxvY2FsaG9zdAo="
           }
         }
