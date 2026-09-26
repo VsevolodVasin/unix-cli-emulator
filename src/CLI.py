@@ -1,16 +1,21 @@
-from VFS import VFS
+import json
+
+from VFS import VFS, VFSError
 
 
 class CLI:
     """Интерактивная оболочка эмулятора."""
 
     def __init__(self, vfs_path=None, script_path=None):
-        """Создаёт VFS и сохраняет параметры запуска."""
-        self.vfs = VFS()
-        self.vfs.active_directory = "~"
-        self.user = "root"
+        """Создаёт VFS (из JSON при наличии пути) и сохраняет параметры."""
         self.vfs_path = vfs_path
         self.script_path = script_path
+        self.user = "root"
+        try:
+            self.vfs = VFS(path=vfs_path) if vfs_path else VFS()
+        except (OSError, ValueError, json.JSONDecodeError, VFSError) as e:
+            print(f"vfs error: {e}")
+            self.vfs = VFS()
 
     def prompt(self):
         """Строка приглашения оболочки."""
@@ -22,7 +27,7 @@ class CLI:
     def execute(self, command, args):
         """
         Выполнить одну команду.
-        Возвращает True при успехе, False при ошибке.
+        Возвращает True при успехе, False при ошибке, 'exit' при выходе.
         """
         if command == "exit":
             return "exit"
@@ -63,8 +68,7 @@ class CLI:
             return
 
         for raw in lines:
-            line = raw.rstrip("\n")
-            stripped = line.strip()
+            stripped = raw.strip()
             if not stripped or stripped.startswith("#"):
                 continue
 
@@ -86,7 +90,7 @@ class CLI:
                 break
 
     def run(self):
-        """Запуск: сначала скрипт (если задан), затем REPL."""
+        """Запуск: сначала скрипт (если задан), затем выход; иначе REPL."""
         if self.script_path:
             self.run_script(self.script_path)
             return

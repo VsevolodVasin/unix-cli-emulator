@@ -8,4 +8,4 @@ if [ -d .venv ]; then
 fi
 
 PYTHONPATH="$ROOT/src${PYTHONPATH:+:$PYTHONPATH}" \
-  python3 "$ROOT/src/main.py" "$@"
+  python3 -u "$ROOT/src/main.py" "$@"

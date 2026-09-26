@@ -1,0 +1,33 @@
+{
+  "name": "Multi",
+  "root": {
+    "type": "dir",
+    "children": {
+      "a.txt": {
+        "type": "file",
+        "encoding": "text",
+        "content": "alpha\n"
+      },
+      "b.txt": {
+        "type": "file",
+        "encoding": "text",
+        "content": "bravo\nbravo\ncharlie\n"
+      },
+      "data.bin": {
+        "type": "file",
+        "encoding": "base64",
+        "content": "SGVsbG8gYmluYXJ5IQ=="
+      },
+      "notes": {
+        "type": "dir",
+        "children": {
+          "todo.txt": {
+            "type": "file",
+            "encoding": "text",
+            "content": "buy milk\n"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Minimal",
+  "root": {
+    "type": "dir",
+    "children": {
+      "readme.txt": {
+        "type": "file",
+        "encoding": "text",
+        "content": "minimal vfs\n"
+      }
+    }
+  }
+}

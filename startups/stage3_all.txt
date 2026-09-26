@@ -1,0 +1,7 @@
+# тестирование команд этапов 1–3 на загруженной VFS
+ls
+ls /nope
+cd /home
+cd /
+unknown
+exit

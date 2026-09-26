@@ -1,0 +1,48 @@
+{
+  "name": "Deep",
+  "root": {
+    "type": "dir",
+    "children": {
+      "home": {
+        "type": "dir",
+        "children": {
+          "user": {
+            "type": "dir",
+            "children": {
+              "docs": {
+                "type": "dir",
+                "children": {
+                  "report.txt": {
+                    "type": "file",
+                    "encoding": "text",
+                    "content": "deep level report\n"
+                  },
+                  "img.bin": {
+                    "type": "file",
+                    "encoding": "base64",
+                    "content": "AQIDBA=="
+                  }
+                }
+              },
+              ".profile": {
+                "type": "file",
+                "encoding": "text",
+                "content": "export PATH\n"
+              }
+            }
+          }
+        }
+      },
+      "etc": {
+        "type": "dir",
+        "children": {
+          "hosts": {
+            "type": "file",
+            "encoding": "text",
+            "content": "127.0.0.1 localhost\n"
+          }
+        }
+      }
+    }
+  }
+}

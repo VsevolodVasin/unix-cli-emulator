@@ -25,22 +25,29 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-def print_debug_config(args):
+def print_debug_config(args, cli=None):
     """Отладочный вывод всех заданных параметров."""
     print("=== debug: параметры запуска ===")
     print(f"vfs_path    = {args.vfs_path!r}")
     print(f"script_path = {args.script_path!r}")
     print(f"cwd         = {os.getcwd()!r}")
     print(f"argv        = {sys.argv!r}")
+    if cli is not None:
+        print(f"vfs.name    = {cli.vfs.name!r}")
+        print(f"vfs.cwd     = {cli.vfs.active_directory!r}")
+        try:
+            root_entries = cli.vfs.list_dir("/")
+        except Exception:
+            root_entries = []
+        print(f"vfs.root    = {root_entries!r}")
     print("================================")
 
 
 def run(argv=None):
     """Точка входа: разбор аргументов и запуск CLI."""
     args = parse_args(argv)
-    print_debug_config(args)
-
     cli = CLI(vfs_path=args.vfs_path, script_path=args.script_path)
+    print_debug_config(args, cli)
     cli.run()
 
 
