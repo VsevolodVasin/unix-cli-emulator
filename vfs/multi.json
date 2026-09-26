@@ -5,13 +5,13 @@
     "children": {
       "a.txt": {
         "type": "file",
-        "encoding": "text",
-        "content": "alpha\n"
+        "encoding": "base64",
+        "content": "YWxwaGEK"
       },
       "b.txt": {
         "type": "file",
-        "encoding": "text",
-        "content": "bravo\nbravo\ncharlie\n"
+        "encoding": "base64",
+        "content": "YnJhdm8KYnJhdm8KY2hhcmxpZQo="
       },
       "data.bin": {
         "type": "file",
@@ -23,8 +23,8 @@
         "children": {
           "todo.txt": {
             "type": "file",
-            "encoding": "text",
-            "content": "buy milk\n"
+            "encoding": "base64",
+            "content": "YnV5IG1pbGsK"
           }
         }
       }

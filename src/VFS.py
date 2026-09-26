@@ -51,6 +51,7 @@ class VFS:
                 children[name] = self._normalize_node(child)
             return {"type": "dir", "children": children}
         if ntype == "file":
+            # encoding: base64 (основной) или text (строка в JSON)
             encoding = node.get("encoding", "text")
             content = node.get("content", "")
             if encoding == "base64":

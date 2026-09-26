@@ -14,8 +14,8 @@
                 "children": {
                   "report.txt": {
                     "type": "file",
-                    "encoding": "text",
-                    "content": "deep level report\n"
+                    "encoding": "base64",
+                    "content": "ZGVlcCBsZXZlbCByZXBvcnQK"
                   },
                   "img.bin": {
                     "type": "file",
@@ -26,8 +26,8 @@
               },
               ".profile": {
                 "type": "file",
-                "encoding": "text",
-                "content": "export PATH\n"
+                "encoding": "base64",
+                "content": "ZXhwb3J0IFBBVEgK"
               }
             }
           }
@@ -38,8 +38,8 @@
         "children": {
           "hosts": {
             "type": "file",
-            "encoding": "text",
-            "content": "127.0.0.1 localhost\n"
+            "encoding": "base64",
+            "content": "MTI3LjAuMC4xIGxvY2FsaG9zdAo="
           }
         }
       }

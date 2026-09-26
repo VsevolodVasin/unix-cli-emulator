@@ -5,8 +5,8 @@
     "children": {
       "readme.txt": {
         "type": "file",
-        "encoding": "text",
-        "content": "minimal vfs\n"
+        "encoding": "base64",
+        "content": "bWluaW1hbCB2ZnMK"
       }
     }
   }
