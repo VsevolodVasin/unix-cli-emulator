@@ -1,0 +1,44 @@
+# этап 4: ls, cd, echo, du, uniq + ошибки
+
+# --- echo ---
+echo hello world
+echo "quoted text"
+
+# --- ls ---
+ls
+ls /
+ls /home
+ls /home /etc
+ls /missing
+
+# --- cd ---
+cd /home
+ls
+cd user
+ls
+cd docs
+ls
+cd /
+cd /no/such
+cd /home/user/docs/report.txt
+cd /home/user/docs
+
+# --- du ---
+du
+du report.txt
+du /home
+du /missing
+
+# --- uniq ---
+cd /
+# multi VFS needed for b.txt — use deep/hosts for simple file
+uniq /etc/hosts
+uniq -c /etc/hosts
+uniq
+uniq /missing
+uniq /home
+
+# --- unknown ---
+foobar
+
+exit

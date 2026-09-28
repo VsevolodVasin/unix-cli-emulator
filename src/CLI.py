@@ -1,4 +1,5 @@
 import json
+import shlex
 
 from VFS import VFS, VFSError
 
@@ -24,36 +25,141 @@ class CLI:
             f"{self.vfs.active_directory}$ "
         )
 
+    def cmd_ls(self, args):
+        """Список содержимого каталога. ls [path...]"""
+        paths = args if args else ["."]
+        ok = True
+        multi = len(paths) > 1
+        for path in paths:
+            try:
+                entries = self.vfs.list_dir(path)
+            except VFSError as e:
+                print(f"ls: {e}")
+                ok = False
+                continue
+            if multi:
+                label = self.vfs.resolve(path)
+                print(f"{label}:")
+            for name in entries:
+                print(name)
+            if multi and path != paths[-1]:
+                print()
+        return ok
+
+    def cmd_cd(self, args):
+        """Смена каталога. cd [path]"""
+        if len(args) > 1:
+            print("cd: too many arguments")
+            return False
+        path = args[0] if args else "/"
+        try:
+            self.vfs.chdir(path)
+        except VFSError as e:
+            print(f"cd: {e}")
+            return False
+        return True
+
+    def cmd_echo(self, args):
+        """Печать аргументов. echo [args...]"""
+        print(" ".join(args))
+        return True
+
+    def cmd_du(self, args):
+        """Размер файла/каталога в байтах. du [path...]"""
+        paths = args if args else ["."]
+        ok = True
+        for path in paths:
+            try:
+                size = self.vfs.size_of(path)
+                shown = self.vfs.resolve(path)
+                print(f"{size}\t{shown}")
+            except VFSError as e:
+                print(f"du: {e}")
+                ok = False
+        return ok
+
+    def cmd_uniq(self, args):
+        """
+        Уникальные подряд идущие строки файла.
+        uniq [-c] FILE
+        """
+        count = False
+        files = []
+        for arg in args:
+            if arg == "-c":
+                count = True
+            elif arg.startswith("-"):
+                print(f"uniq: invalid option -- '{arg}'")
+                return False
+            else:
+                files.append(arg)
+
+        if len(files) != 1:
+            print("uniq: expected exactly one file")
+            return False
+
+        try:
+            text = self.vfs.read_text(files[0])
+        except VFSError as e:
+            print(f"uniq: {e}")
+            return False
+
+        lines = text.splitlines()
+        prev = None
+        n = 0
+        for line in lines:
+            if prev is None:
+                prev = line
+                n = 1
+            elif line == prev:
+                n += 1
+            else:
+                self._uniq_emit(prev, n, count)
+                prev = line
+                n = 1
+        if prev is not None:
+            self._uniq_emit(prev, n, count)
+        return True
+
+    @staticmethod
+    def _uniq_emit(line, n, count):
+        if count:
+            print(f"{n:4d} {line}")
+        else:
+            print(line)
+
     def execute(self, command, args):
         """
         Выполнить одну команду.
-        Возвращает True при успехе, False при ошибке, 'exit' при выходе.
+        Возвращает True / False / 'exit'.
         """
-        if command == "exit":
-            return "exit"
-        if command == "ls":
-            print(command)
-            for arg in args:
-                print(arg)
-            return True
-        if command == "cd":
-            print(command)
-            for arg in args:
-                print(arg)
-            return True
-        print("command not found: " + command)
-        return False
+        handlers = {
+            "exit": lambda _a: "exit",
+            "ls": self.cmd_ls,
+            "cd": self.cmd_cd,
+            "echo": self.cmd_echo,
+            "du": self.cmd_du,
+            "uniq": self.cmd_uniq,
+        }
+        handler = handlers.get(command)
+        if handler is None:
+            print("command not found: " + command)
+            return False
+        return handler(args)
 
     def handle_line(self, line):
         """Разобрать и выполнить строку ввода."""
         line = line.strip()
         if not line or line.startswith("#"):
             return True
-
-        parts = line.split(" ")
-        command = parts[0]
-        args = [x for x in parts[1:] if x != ""]
-        return self.execute(command, args)
+        try:
+            parts = shlex.split(line)
+        except ValueError as e:
+            print(f"parse error: {e}")
+            return False
+        if not parts:
+            return True
+        return self.execute(parts[0], parts[1:])
 
     def run_script(self, path):
         """
@@ -90,7 +196,7 @@ class CLI:
                 break
 
     def run(self):
-        """Запуск: сначала скрипт (если задан), затем выход; иначе REPL."""
+        """Запуск: сначала скрипт (если задан), иначе REPL."""
         if self.script_path:
             self.run_script(self.script_path)
             return

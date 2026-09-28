@@ -1,0 +1,8 @@
+# uniq на файле с повторяющимися строками
+uniq b.txt
+uniq -c b.txt
+echo ---
+ls notes
+cd notes
+uniq todo.txt
+exit
