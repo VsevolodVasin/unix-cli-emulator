@@ -1,5 +1,6 @@
 import json
 import shlex
+import sys
 
 from VFS import VFS, VFSError
 
@@ -211,8 +212,13 @@ class CLI:
         """Интерактивный цикл чтения команд."""
         while True:
             try:
-                line = input(self.prompt())
-            except EOFError:
+                print(self.prompt(), end="", flush=True)
+                raw = sys.stdin.buffer.readline()
+                if raw == b"":
+                    print()
+                    break
+                line = raw.decode("utf-8", errors="replace").rstrip("\n\r")
+            except (EOFError, KeyboardInterrupt):
                 print()
                 break
             result = self.handle_line(line)
