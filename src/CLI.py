@@ -128,6 +128,29 @@ class CLI:
         else:
             print(line)
 
+    def cmd_touch(self, args):
+        """Создать пустой файл или обновить существующий. touch FILE..."""
+        if not args:
+            print("touch: missing file operand")
+            return False
+        ok = True
+        for path in args:
+            try:
+                if self.vfs.is_dir(path):
+                    print(f"touch: {path}: is a directory")
+                    ok = False
+                    continue
+                if self.vfs.is_file(path):
+                    # «обновление» в памяти — перезапись тем же содержимым
+                    content = self.vfs.read_file(path)
+                    self.vfs.write_file(path, content)
+                else:
+                    self.vfs.write_file(path, b"")
+            except VFSError as e:
+                print(f"touch: {e}")
+                ok = False
+        return ok
+
     def execute(self, command, args):
         """
         Выполнить одну команду.
@@ -140,6 +163,7 @@ class CLI:
             "echo": self.cmd_echo,
             "du": self.cmd_du,
             "uniq": self.cmd_uniq,
+            "touch": self.cmd_touch,
         }
         handler = handlers.get(command)
         if handler is None:
