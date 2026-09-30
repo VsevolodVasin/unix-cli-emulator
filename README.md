@@ -72,12 +72,10 @@
     "children": {
       "file.txt": {
         "type": "file",
-        "encoding": "text",
         "content": "hello\n"
       },
       "data.bin": {
         "type": "file",
-        "encoding": "base64",
         "content": "AQIDBA=="
       }
     }
