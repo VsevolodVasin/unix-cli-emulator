@@ -27,23 +27,31 @@ class CLI:
         )
 
     def cmd_ls(self, args):
-        """Список содержимого каталога. ls [path...]"""
-        paths = args if args else ["."]
+        """Список файлов/каталогов. ls [path...]"""
+        paths = [a for a in args if not a.startswith("-")]
+        if not paths:
+            paths = ["."]
         ok = True
         multi = len(paths) > 1
-        for path in paths:
-            try:
-                entries = self.vfs.list_dir(path)
-            except VFSError as e:
-                print(f"ls: {e}")
+        for i, path in enumerate(paths):
+            if self.vfs.is_file(path):
+                print(path)
+            elif self.vfs.is_dir(path):
+                try:
+                    entries = self.vfs.list_dir(path)
+                except VFSError as e:
+                    print(f"ls: {e}")
+                    ok = False
+                    continue
+                if multi:
+                    print(f"{path}:")
+                for name in entries:
+                    print(name)
+            else:
+                print(f"ls: cannot access '{path}': "
+                      f"No such file or directory")
                 ok = False
-                continue
-            if multi:
-                label = self.vfs.resolve(path)
-                print(f"{label}:")
-            for name in entries:
-                print(name)
-            if multi and path != paths[-1]:
+            if multi and i != len(paths) - 1:
                 print()
         return ok
 
