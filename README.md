@@ -34,6 +34,7 @@
 | `ls [path...]` | Список каталога |
 | `cd [path]` | Смена текущего каталога |
 | `echo [args...]` | Печать аргументов |
+| `cat FILE...` | Вывести содержимое файла |
 | `du [path...]` | Размер файла/каталога в байтах |
 | `uniq [-c] FILE` | Уникальные подряд идущие строки файла |
 | `touch FILE...` | Создать пустой файл или «обновить» существующий (в памяти) |
@@ -53,7 +54,8 @@
 Поля: `vfs`, `user` (`root`), `vfs_path`, `script_path`.
 
 Методы: `prompt`, `execute`, `handle_line`, `run_script`, `run_repl`, `run`,
-а также `cmd_ls` / `cmd_cd` / `cmd_echo` / `cmd_du` / `cmd_uniq` / `cmd_touch`.
+а также `cmd_ls` / `cmd_cd` / `cmd_echo` / `cmd_cat` / `cmd_du` /
+`cmd_uniq` / `cmd_touch`.
 
 ### `VFS` (`VFS.py`)
 

@@ -139,6 +139,23 @@ class CLI:
         print(" ".join(args))
         return True
 
+    def cmd_cat(self, args):
+        """Вывести содержимое файла(ов). cat FILE..."""
+        if not args:
+            print("cat: missing file operand")
+            return False
+        ok = True
+        for path in args:
+            try:
+                text = self.vfs.read_text(path)
+            except VFSError as e:
+                print(f"cat: {e}")
+                ok = False
+                continue
+            # не добавлять лишний \n, если файл уже им заканчивается
+            print(text, end="" if text.endswith("\n") else "\n")
+        return ok
+
     def cmd_du(self, args):
         """Размер файла/каталога в байтах. du [path...]"""
         paths = args if args else ["."]
@@ -236,6 +253,7 @@ class CLI:
             "ls": self.cmd_ls,
             "cd": self.cmd_cd,
             "echo": self.cmd_echo,
+            "cat": self.cmd_cat,
             "du": self.cmd_du,
             "uniq": self.cmd_uniq,
             "touch": self.cmd_touch,
