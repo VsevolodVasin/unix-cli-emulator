@@ -1,19 +1,23 @@
-# этап 5: touch + регрессия прошлых команд (в памяти)
+# этап 5: touch + mtime в ls -l + ошибки
 
 ls
+ls -l /etc/hosts
+touch /etc/hosts
+ls -l /etc/hosts
 touch newfile.txt
-ls
+ls -l newfile.txt
 du newfile.txt
 touch newfile.txt
-echo hello > should_not_redirect
+ls -l newfile.txt
+touch
 touch /missing/dir/file.txt
 touch /home
 touch a.txt b.txt
-ls
+ls -l
 cd /home/user/docs
 touch note.txt
-ls
-du
+ls -l
+du note.txt
 cd /
 foobar
 exit

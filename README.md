@@ -37,7 +37,7 @@
 | `cat FILE...` | Вывести содержимое файла |
 | `du [path...]` | Размер файла/каталога в байтах |
 | `uniq [-c] FILE` | Уникальные подряд идущие строки файла |
-| `touch FILE...` | Создать пустой файл или «обновить» существующий (в памяти) |
+| `touch FILE...` | Создать файл или обновить mtime (только в памяти) |
 | `exit` | Выход |
 | другое | `command not found: ...` |
 
@@ -62,7 +62,8 @@
 Дерево в памяти. Поля: `name`, `cwd` / `active_directory`, `root`.
 
 Основные методы: `load`, `resolve`, `list_dir`, `chdir`, `read_file`,
-`read_text`, `write_file`, `size_of`, `exists`, `is_dir`, `is_file`.
+`read_text`, `write_file`, `touch`, `mtime_of`, `size_of`, `exists`,
+`is_dir`, `is_file`. У узлов хранится `mtime` для вывода в `ls -l`.
 
 ### Формат VFS (JSON)
 
