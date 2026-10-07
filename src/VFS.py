@@ -1,5 +1,9 @@
 import base64
 import json
+import time
+
+# mtime по умолчанию для узлов из JSON без поля mtime
+_DEFAULT_MTIME = 1767225600.0  # 2026-01-01 00:00:00 UTC
 
 
 class VFSError(Exception):
@@ -16,7 +20,11 @@ class VFS:
         """
         self.name = "Emulator"
         self.cwd = "/"
-        self.root = {"type": "dir", "children": {}}
+        self.root = {
+            "type": "dir",
+            "children": {},
+            "mtime": time.time(),
+        }
         if path:
             self.load(path)
 
@@ -40,23 +48,42 @@ class VFS:
         self.root = self._normalize_node(root)
         self.cwd = "/"
 
+    def _node_mtime(self, node):
+        """mtime узла из JSON или значение по умолчанию."""
+        value = node.get("mtime")
+        if value is None:
+            return _DEFAULT_MTIME
+        try:
+            return float(value)
+        except (TypeError, ValueError) as e:
+            raise VFSError(f"invalid mtime: {value}") from e
+
     def _normalize_node(self, node):
         """Привести узел JSON к внутреннему представлению."""
         if not isinstance(node, dict) or "type" not in node:
             raise VFSError("invalid VFS node")
         ntype = node["type"]
+        mtime = self._node_mtime(node)
         if ntype == "dir":
             children = {}
             for name, child in node.get("children", {}).items():
                 children[name] = self._normalize_node(child)
-            return {"type": "dir", "children": children}
+            return {
+                "type": "dir",
+                "children": children,
+                "mtime": mtime,
+            }
         if ntype == "file":
             content = node.get("content", "")
             try:
                 raw = base64.b64decode(content, validate=True)
             except (TypeError, ValueError) as e:
                 raise VFSError(f"invalid base64 content: {e}") from e
-            return {"type": "file", "content": raw}
+            return {
+                "type": "file",
+                "content": raw,
+                "mtime": mtime,
+            }
         raise VFSError(f"unknown node type: {ntype}")
 
     def _split(self, path):
@@ -131,6 +158,23 @@ class VFS:
         """Прочитать файл как текст."""
         return self.read_file(path).decode("utf-8", errors="replace")
 
+    def mtime_of(self, path):
+        """Время модификации узла (unix timestamp)."""
+        node = self._walk(path)
+        if node is None:
+            raise VFSError(f"no such file or directory: {path}")
+        return float(node.get("mtime", _DEFAULT_MTIME))
+
+    def touch(self, path):
+        """Создать пустой файл или обновить mtime существующего."""
+        if self.is_dir(path):
+            raise VFSError(f"is a directory: {path}")
+        if self.is_file(path):
+            node = self._walk(path)
+            node["mtime"] = time.time()
+            return
+        self.write_file(path, b"")
+
     def write_file(self, path, content=b""):
         """Создать/перезаписать файл в памяти."""
         abs_path = self.resolve(path)
@@ -149,7 +193,13 @@ class VFS:
         existing = parent["children"].get(name)
         if existing and existing.get("type") == "dir":
             raise VFSError(f"is a directory: {path}")
-        parent["children"][name] = {"type": "file", "content": content}
+        now = time.time()
+        parent["children"][name] = {
+            "type": "file",
+            "content": content,
+            "mtime": now,
+        }
+        parent["mtime"] = now
 
     def chdir(self, path):
         """Сменить текущий каталог."""

@@ -1,6 +1,7 @@
 import json
 import shlex
 import sys
+from datetime import datetime
 
 from VFS import VFS, VFSError
 
@@ -126,6 +127,12 @@ class CLI:
             value /= _KIB
         return str(size)
 
+    @staticmethod
+    def _format_mtime(ts):
+        """Формат даты как в ls -l: Mon DD HH:MM."""
+        dt = datetime.fromtimestamp(ts)
+        return f"{dt.strftime('%b')} {dt.day:2d} {dt.strftime('%H:%M')}"
+
     def _ls_print_entry(self, display, path, long_fmt, human):
         """Печать одной записи ls. -l: права, владелец, размер, имя."""
         if not long_fmt:
@@ -135,12 +142,15 @@ class CLI:
         mode = "drwxr-xr-x" if is_dir else "-rw-r--r--"
         try:
             size = self.vfs.size_of(path)
+            mtime = self.vfs.mtime_of(path)
         except VFSError:
             size = 0
+            mtime = 0
         size_s = self._human_size(size) if human else str(size)
+        date_s = self._format_mtime(mtime)
         print(
             f"{mode}  1 {self.user:<5} {self.user:<5} "
-            f"{size_s:>6} Jan  1 00:00 {display}"
+            f"{size_s:>6} {date_s} {display}"
         )
 
     def cmd_cd(self, args):
