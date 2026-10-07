@@ -4,6 +4,10 @@ import sys
 
 from VFS import VFS, VFSError
 
+_KIB = 1024
+_SIZE_UNITS = ("K", "M", "G", "T")
+_LS_FLAGS = frozenset("lha")
+
 
 class CLI:
     """Интерактивная оболочка эмулятора."""
@@ -28,83 +32,102 @@ class CLI:
 
     def cmd_ls(self, args):
         """Список файлов/каталогов. ls [-lha] [path...]"""
-        long_fmt = False
-        human = False
-        all_entries = False
-        paths = []
-        for arg in args:
-            if arg.startswith("-") and arg != "-":
-                for ch in arg[1:]:
-                    if ch == "l":
-                        long_fmt = True
-                    elif ch == "h":
-                        human = True
-                    elif ch == "a":
-                        all_entries = True
-                    else:
-                        print(f"ls: invalid option -- '{ch}'")
-                        return False
-            else:
-                paths.append(arg)
-        if not paths:
-            paths = ["."]
-
+        parsed = self._parse_ls_args(args)
+        if parsed is None:
+            return False
+        long_fmt, human, show_all, paths = parsed
         ok = True
         multi = len(paths) > 1
         for i, path in enumerate(paths):
-            if self.vfs.is_file(path):
-                self._ls_print_entry(path, path, long_fmt, human)
-            elif self.vfs.is_dir(path):
-                try:
-                    entries = self.vfs.list_dir(path)
-                except VFSError as e:
-                    print(f"ls: {e}")
-                    ok = False
-                    continue
-                if not all_entries:
-                    entries = [
-                        n for n in entries if not n.startswith(".")
-                    ]
-                if all_entries:
-                    entries = [".", ".."] + entries
-                if multi:
-                    print(f"{path}:")
-                for name in entries:
-                    if name == ".":
-                        child = path
-                    elif name == "..":
-                        child = self.vfs.resolve(f"{path}/..")
-                    elif path == "/":
-                        child = f"/{name}"
-                    else:
-                        child = f"{path.rstrip('/')}/{name}"
-                    self._ls_print_entry(
-                        name, child, long_fmt, human
-                    )
-            else:
-                print(f"ls: cannot access '{path}': "
-                      f"No such file or directory")
+            if not self._ls_one(path, long_fmt, human, show_all, multi):
                 ok = False
             if multi and i != len(paths) - 1:
                 print()
         return ok
 
+    def _parse_ls_args(self, args):
+        """Флаги и пути ls. None при неизвестном флаге."""
+        flags = {name: False for name in _LS_FLAGS}
+        paths = []
+        for arg in args:
+            if arg.startswith("-") and arg != "-":
+                if not self._apply_ls_flags(arg[1:], flags):
+                    return None
+            else:
+                paths.append(arg)
+        if not paths:
+            paths = ["."]
+        return flags["l"], flags["h"], flags["a"], paths
+
+    @staticmethod
+    def _apply_ls_flags(chars, flags):
+        """Включить флаги ls. False, если символ неизвестен."""
+        for ch in chars:
+            if ch not in _LS_FLAGS:
+                print(f"ls: invalid option -- '{ch}'")
+                return False
+            flags[ch] = True
+        return True
+
+    def _ls_one(self, path, long_fmt, human, show_all, multi):
+        """Обработать один аргумент ls."""
+        if self.vfs.is_file(path):
+            self._ls_print_entry(path, path, long_fmt, human)
+            return True
+        if self.vfs.is_dir(path):
+            return self._ls_dir(path, long_fmt, human, show_all, multi)
+        print(f"ls: cannot access '{path}': "
+              f"No such file or directory")
+        return False
+
+    def _ls_dir(self, path, long_fmt, human, show_all, multi):
+        """Вывести содержимое каталога."""
+        try:
+            entries = self.vfs.list_dir(path)
+        except VFSError as e:
+            print(f"ls: {e}")
+            return False
+        names = self._ls_names(entries, show_all)
+        if multi:
+            print(f"{path}:")
+        for name in names:
+            child = self._ls_child_path(path, name)
+            self._ls_print_entry(name, child, long_fmt, human)
+        return True
+
+    @staticmethod
+    def _ls_names(entries, show_all):
+        """Имена для вывода ls с учётом -a."""
+        if not show_all:
+            return [n for n in entries if not n.startswith(".")]
+        return [".", ".."] + entries
+
+    def _ls_child_path(self, path, name):
+        """Путь дочерней записи каталога."""
+        if name == ".":
+            return path
+        if name == "..":
+            return self.vfs.resolve(f"{path}/..")
+        if path == "/":
+            return f"/{name}"
+        return f"{path.rstrip('/')}/{name}"
+
     @staticmethod
     def _human_size(size):
         """Размер в человекочитаемом виде (-h)."""
-        if size < 1024:
+        if size < _KIB:
             return f"{size}B"
-        units = ["K", "M", "G", "T"]
-        value = float(size) / 1024
-        for unit in units:
-            if value < 1024 or unit == units[-1]:
+        value = float(size) / _KIB
+        last = _SIZE_UNITS[-1]
+        for unit in _SIZE_UNITS:
+            if value < _KIB or unit == last:
                 text = f"{value:.1f}".rstrip("0").rstrip(".")
                 return f"{text}{unit}"
-            value /= 1024
+            value /= _KIB
         return str(size)
 
     def _ls_print_entry(self, display, path, long_fmt, human):
-        """Печать одной записи ls (имя или long-формат)."""
+        """Печать одной записи ls. -l: права, владелец, размер, имя."""
         if not long_fmt:
             print(display)
             return
@@ -115,7 +138,6 @@ class CLI:
         except VFSError:
             size = 0
         size_s = self._human_size(size) if human else str(size)
-        # owner/group как в эмуляторе; дата фиктивная
         print(
             f"{mode}  1 {self.user:<5} {self.user:<5} "
             f"{size_s:>6} Jan  1 00:00 {display}"
@@ -146,15 +168,19 @@ class CLI:
             return False
         ok = True
         for path in args:
-            try:
-                text = self.vfs.read_text(path)
-            except VFSError as e:
-                print(f"cat: {e}")
+            if not self._cat_one(path):
                 ok = False
-                continue
-            # не добавлять лишний \n, если файл уже им заканчивается
-            print(text, end="" if text.endswith("\n") else "\n")
         return ok
+
+    def _cat_one(self, path):
+        """Печать одного файла без лишнего перевода строки в конце."""
+        try:
+            text = self.vfs.read_text(path)
+        except VFSError as e:
+            print(f"cat: {e}")
+            return False
+        print(text, end="" if text.endswith("\n") else "\n")
+        return True
 
     def cmd_du(self, args):
         """Размер файла/каталога в байтах. du [path...]"""
@@ -171,10 +197,22 @@ class CLI:
         return ok
 
     def cmd_uniq(self, args):
-        """
-        Уникальные подряд идущие строки файла.
-        uniq [-c] FILE
-        """
+        """Уникальные подряд идущие строки файла. uniq [-c] FILE"""
+        parsed = self._uniq_parse_args(args)
+        if parsed is None:
+            return False
+        count, filename = parsed
+        try:
+            text = self.vfs.read_text(filename)
+        except VFSError as e:
+            print(f"uniq: {e}")
+            return False
+        self._uniq_print(text.splitlines(), count)
+        return True
+
+    @staticmethod
+    def _uniq_parse_args(args):
+        """Разобрать uniq. None при ошибке аргументов."""
         count = False
         files = []
         for arg in args:
@@ -182,39 +220,32 @@ class CLI:
                 count = True
             elif arg.startswith("-"):
                 print(f"uniq: invalid option -- '{arg}'")
-                return False
+                return None
             else:
                 files.append(arg)
-
         if len(files) != 1:
             print("uniq: expected exactly one file")
-            return False
+            return None
+        return count, files[0]
 
-        try:
-            text = self.vfs.read_text(files[0])
-        except VFSError as e:
-            print(f"uniq: {e}")
-            return False
-
-        lines = text.splitlines()
+    def _uniq_print(self, lines, count):
+        """Схлопнуть подряд идущие одинаковые строки и напечатать."""
         prev = None
         n = 0
         for line in lines:
             if prev is None:
-                prev = line
-                n = 1
+                prev, n = line, 1
             elif line == prev:
                 n += 1
             else:
                 self._uniq_emit(prev, n, count)
-                prev = line
-                n = 1
+                prev, n = line, 1
         if prev is not None:
             self._uniq_emit(prev, n, count)
-        return True
 
     @staticmethod
     def _uniq_emit(line, n, count):
+        """Печать строки uniq, с счётчиком при -c."""
         if count:
             print(f"{n:4d} {line}")
         else:
@@ -227,21 +258,24 @@ class CLI:
             return False
         ok = True
         for path in args:
-            try:
-                if self.vfs.is_dir(path):
-                    print(f"touch: {path}: is a directory")
-                    ok = False
-                    continue
-                if self.vfs.is_file(path):
-                    # «обновление» в памяти — перезапись тем же содержимым
-                    content = self.vfs.read_file(path)
-                    self.vfs.write_file(path, content)
-                else:
-                    self.vfs.write_file(path, b"")
-            except VFSError as e:
-                print(f"touch: {e}")
+            if not self._touch_one(path):
                 ok = False
         return ok
+
+    def _touch_one(self, path):
+        """Создать файл или перезаписать существующий тем же содержимым."""
+        try:
+            if self.vfs.is_dir(path):
+                print(f"touch: {path}: is a directory")
+                return False
+            content = b""
+            if self.vfs.is_file(path):
+                content = self.vfs.read_file(path)
+            self.vfs.write_file(path, content)
+        except VFSError as e:
+            print(f"touch: {e}")
+            return False
+        return True
 
     def execute(self, command, args):
         """
