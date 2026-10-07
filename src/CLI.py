@@ -27,15 +27,33 @@ class CLI:
         )
 
     def cmd_ls(self, args):
-        """Список файлов/каталогов. ls [path...]"""
-        paths = [a for a in args if not a.startswith("-")]
+        """Список файлов/каталогов. ls [-lha] [path...]"""
+        long_fmt = False
+        human = False
+        all_entries = False
+        paths = []
+        for arg in args:
+            if arg.startswith("-") and arg != "-":
+                for ch in arg[1:]:
+                    if ch == "l":
+                        long_fmt = True
+                    elif ch == "h":
+                        human = True
+                    elif ch == "a":
+                        all_entries = True
+                    else:
+                        print(f"ls: invalid option -- '{ch}'")
+                        return False
+            else:
+                paths.append(arg)
         if not paths:
             paths = ["."]
+
         ok = True
         multi = len(paths) > 1
         for i, path in enumerate(paths):
             if self.vfs.is_file(path):
-                print(path)
+                self._ls_print_entry(path, path, long_fmt, human)
             elif self.vfs.is_dir(path):
                 try:
                     entries = self.vfs.list_dir(path)
@@ -43,10 +61,26 @@ class CLI:
                     print(f"ls: {e}")
                     ok = False
                     continue
+                if not all_entries:
+                    entries = [
+                        n for n in entries if not n.startswith(".")
+                    ]
+                if all_entries:
+                    entries = [".", ".."] + entries
                 if multi:
                     print(f"{path}:")
                 for name in entries:
-                    print(name)
+                    if name == ".":
+                        child = path
+                    elif name == "..":
+                        child = self.vfs.resolve(f"{path}/..")
+                    elif path == "/":
+                        child = f"/{name}"
+                    else:
+                        child = f"{path.rstrip('/')}/{name}"
+                    self._ls_print_entry(
+                        name, child, long_fmt, human
+                    )
             else:
                 print(f"ls: cannot access '{path}': "
                       f"No such file or directory")
@@ -54,6 +88,38 @@ class CLI:
             if multi and i != len(paths) - 1:
                 print()
         return ok
+
+    @staticmethod
+    def _human_size(size):
+        """Размер в человекочитаемом виде (-h)."""
+        if size < 1024:
+            return f"{size}B"
+        units = ["K", "M", "G", "T"]
+        value = float(size) / 1024
+        for unit in units:
+            if value < 1024 or unit == units[-1]:
+                text = f"{value:.1f}".rstrip("0").rstrip(".")
+                return f"{text}{unit}"
+            value /= 1024
+        return str(size)
+
+    def _ls_print_entry(self, display, path, long_fmt, human):
+        """Печать одной записи ls (имя или long-формат)."""
+        if not long_fmt:
+            print(display)
+            return
+        is_dir = self.vfs.is_dir(path)
+        mode = "drwxr-xr-x" if is_dir else "-rw-r--r--"
+        try:
+            size = self.vfs.size_of(path)
+        except VFSError:
+            size = 0
+        size_s = self._human_size(size) if human else str(size)
+        # owner/group как в эмуляторе; дата фиктивная
+        print(
+            f"{mode}  1 {self.user:<5} {self.user:<5} "
+            f"{size_s:>6} Jan  1 00:00 {display}"
+        )
 
     def cmd_cd(self, args):
         """Смена каталога. cd [path]"""
