@@ -2,8 +2,7 @@ import base64
 import json
 import time
 
-# mtime по умолчанию для узлов из JSON без поля mtime
-_DEFAULT_MTIME = 1767225600.0  # 2026-01-01 00:00:00 UTC
+_DEFAULT_MTIME = 1767225600.0
 
 
 class VFSError(Exception):
